@@ -1,0 +1,11 @@
+# Jupyter notebooks (converted to .py)
+*.ipynb
+.ipynb_checkpoints/
+
+# Python
+__pycache__/
+*.pyc
+
+# IDE
+.vscode/
+.idea/
