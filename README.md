@@ -16,10 +16,37 @@ Input characters → Token + Positional Embeddings
 
 Each transformer block uses pre-norm residual connections, 8 attention heads, and a feed-forward network that expands to 4x the embedding dimension.
 
+## Modernization (2026)
+
+The codebase has been modernized from the original 2023 tutorial code to PyTorch 2.x industry standards:
+
+**Bug Fix:**
+- Fixed critical attention scaling bug — original used `1/sqrt(n_embd)` instead of `1/sqrt(head_size)`, over-dampening attention by ~2.83x
+
+**PyTorch 2.x Features:**
+- Flash Attention via `F.scaled_dot_product_attention` (replaces manual attention computation)
+- `torch.compile()` for automatic kernel fusion (GPU only)
+- Automatic Mixed Precision (AMP) with bfloat16/float16 auto-selection (GPU only)
+- TF32 precision for Ampere+ GPUs
+
+**Training Improvements:**
+- GELU activation (GPT-2/3 standard, replaces ReLU)
+- Cosine learning rate schedule with linear warmup
+- Proper weight decay (excluded from biases and LayerNorm parameters)
+- Best model checkpointing by validation loss
+
+**Code Quality:**
+- `GPTConfig` dataclass replaces global variables
+- Accurate class names (`GPTLanguageModel`, `FeedForward`, `CausalSelfAttention`)
+- All model classes receive config via constructor (no global dependencies)
+- `if __name__ == '__main__':` guard for importability
+
+See the `*_MODERNIZATION_REPORT.md` files for detailed explanations of each change.
+
 ## Requirements
 
-- Python 3
-- PyTorch
+- Python 3.10+
+- PyTorch 2.0+
 
 ```bash
 pip install torch
@@ -42,8 +69,19 @@ python Andrej_ToyGPT_Test_Merge_GPU.py
 
 The script will:
 1. Load `input.txt` (Shakespeare corpus, ~1.1M characters, 65-character vocabulary)
-2. Train the model for 5000 iterations (~1.22 train loss / ~1.54 val loss)
-3. Generate 2000 characters of Shakespeare-like text
+2. Train the model for 5000 iterations with cosine LR schedule
+3. Save the best model checkpoint (`best_model.pt`)
+4. Generate 2000 characters of Shakespeare-like text
+
+### Variant Differences
+
+| Feature | `Andrej_GPT_Test.py` | `..._CPU.py` | `..._GPU.py` |
+|---------|---------------------|-------------|-------------|
+| Device | Auto-detect | Forced CPU | Auto-detect (GPU preferred) |
+| torch.compile | Yes (GPU) | Disabled | Yes (GPU) |
+| AMP | Yes (GPU) | Disabled | Yes (GPU) |
+| TF32 | Yes | N/A | Yes |
+| Checkpoint | `best_model.pt` | `best_model_cpu.pt` | `best_model_gpu.pt` |
 
 ## Hyperparameters
 
@@ -54,7 +92,9 @@ The script will:
 | Context length | 128 |
 | Batch size | 32 |
 | Training iterations | 5000 |
-| Learning rate | 1e-3 (AdamW) |
+| Learning rate | 1e-3 → 1e-4 (cosine schedule) |
+| Warmup steps | 100 |
+| Weight decay | 0.1 |
 | Dropout | 0.0 |
 
 ## Sample Output
