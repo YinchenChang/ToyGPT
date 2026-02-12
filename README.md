@@ -73,3 +73,7 @@ Not perfect English, but it captures Shakespeare's style — character names, ia
 ## Acknowledgments
 
 Based on Andrej Karpathy's [nanoGPT](https://github.com/karpathy/nanoGPT) and his ["Let's build GPT"](https://www.youtube.com/watch?v=kCc8FmEb1nY) tutorial.
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
