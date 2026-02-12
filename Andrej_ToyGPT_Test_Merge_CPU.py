@@ -5,6 +5,7 @@
 # Note: This variant forces CPU execution. GPU features (torch.compile, AMP, TF32) are disabled.
 
 import math
+import time
 from dataclasses import dataclass
 
 import torch
@@ -252,6 +253,7 @@ if __name__ == '__main__':
 
     # Training loop
     best_val_loss = float('inf')
+    t_start = time.time()
 
     for step in range(config.max_iters):
         # Update learning rate (cosine schedule with warmup)
@@ -261,8 +263,11 @@ if __name__ == '__main__':
 
         # Periodic evaluation
         if step % config.eval_interval == 0 or step == config.max_iters - 1:
+            t_now = time.time()
+            dt = t_now - t_start
             losses = estimate_loss(model, config, train_data, val_data)
-            print(f"step {step:5d} | train loss {losses['train']:.4f} | val loss {losses['val']:.4f} | lr {lr:.2e}")
+            print(f"step {step:5d} | train loss {losses['train']:.4f} | val loss {losses['val']:.4f} | lr {lr:.2e} | dt {dt:.1f}s")
+            t_start = t_now
 
             # Save best checkpoint
             if losses['val'] < best_val_loss:
